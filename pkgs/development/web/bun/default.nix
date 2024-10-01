@@ -8,7 +8,9 @@
 , writeShellScript
 , curl
 , jq
+, bun
 , common-updater-scripts
+, callPackages
 }:
 
 stdenvNoCC.mkDerivation rec {
@@ -47,7 +49,9 @@ stdenvNoCC.mkDerivation rec {
       --fish $completions_dir/bun.fish
   '';
 
-  passthru = {
+  passthru = let
+    fetchDepsAttrs = callPackages ./fetch-deps { inherit bun; };
+  in {
     sources = {
       "aarch64-darwin" = fetchurl {
         url = "https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-darwin-aarch64.zip";
@@ -78,6 +82,7 @@ stdenvNoCC.mkDerivation rec {
         update-source-version "bun" "$NEW_VERSION" --ignore-same-version --source-key="sources.$platform"
       done
     '';
+    inherit (fetchDepsAttrs) fetchDeps configHook;
   };
   meta = with lib; {
     homepage = "https://bun.sh";
