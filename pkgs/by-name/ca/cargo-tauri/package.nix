@@ -34,6 +34,10 @@ rustPlatform.buildRustPackage rec {
       webkitgtk_4_1
     ];
 
+  patches = [
+    ./skip-icon-macos.patch
+  ];
+
   cargoBuildFlags = [ "--package tauri-cli" ];
   cargoTestFlags = cargoBuildFlags;
 
