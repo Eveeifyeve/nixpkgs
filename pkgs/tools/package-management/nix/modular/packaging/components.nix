@@ -303,6 +303,7 @@ in
         */
         patches = lib.optionals stdenv.hostPlatform.isCygwin [
           ../../patches/fix-cygwin-build.patch
+          ../../patches/Include-bin-in-builder-PATH-on-cygwin.patch
         ];
         /**
           Fetched and patched source to be used in component derivations.
