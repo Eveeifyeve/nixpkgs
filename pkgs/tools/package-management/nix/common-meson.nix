@@ -162,7 +162,8 @@ stdenv.mkDerivation (finalAttrs: {
   ]
   ++ lib.optionals withAWS [
     aws-sdk-cpp
-  ];
+  ]
+  ++ lib.optionals (!finalAttrs.doCheck) finalAttrs.checkInputs;
 
   propagatedBuildInputs = [
     boehmgc
