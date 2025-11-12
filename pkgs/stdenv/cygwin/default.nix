@@ -55,7 +55,7 @@ bootStages
       fetchurlBoot = import ../../build-support/fetchurl {
         inherit lib stdenvNoCC;
         inherit (prevStage) curl;
-        inherit (config) rewriteURL;
+        inherit (config) rewriteURL hashedMirrors;
       };
 
       gcc =
