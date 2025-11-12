@@ -46,7 +46,9 @@ let
       $ErrorActionPreference = 'Stop'
       $bash = "$PSScriptRoot${lib.replaceString "/" "\\" (lib.getBin bash).outPath}\bin\bash.exe"
       & $bash /nix/var/nix/profiles/system/activate
-      & $bash --login -i
+      if (!$?) { throw 'activation script failed' }
+      & $bash --login -i $args
+      if (!$?) { exit 1 }
     ''
   );
 
@@ -110,7 +112,7 @@ in
 
               $_ = ni $dir\.test-target
               try {
-              $_ = ni $dir\.test-link -itemtype symboliclink -value $dir\.test-target
+                $_ = ni $dir\.test-link -itemtype symboliclink -value $dir\.test-target
               } catch {
                   write-error 'failed to create symbolic link: developer mode may need to be enabled'
                   throw
@@ -119,7 +121,7 @@ in
               rm $dir\.test-target
 
               $env:CYGWIN = "winsymlinks=native"
-              & $PSScriptRoot\tar -C $dir -xpf $PSScriptRoot\${config.system.build.tarball.fileName}.tar${config.system.build.tarball.extension}
+              & $PSScriptRoot\tar -C $dir --force-local -xpf $PSScriptRoot\${config.system.build.tarball.fileName}.tar${config.system.build.tarball.extension}
               if (!$?) { throw 'failed to extract tarball' }
             ''
           );
