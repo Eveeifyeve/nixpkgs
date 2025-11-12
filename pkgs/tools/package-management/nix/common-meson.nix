@@ -91,7 +91,11 @@ stdenv.mkDerivation (finalAttrs: {
   version = "${version}${suffix}";
   VERSION_SUFFIX = suffix;
 
-  inherit src patches;
+  inherit src;
+
+  patches = patches ++ [
+    ./patches/fix-cygwin-build.patch
+  ];
 
   outputs = [
     "out"
@@ -170,6 +174,18 @@ stdenv.mkDerivation (finalAttrs: {
     nlohmann_json
     libarchive
   ];
+
+  env = lib.optionalAttrs stdenv.hostPlatform.isCygwin {
+    NIX_CFLAGS_COMPILE = toString (
+      lib.optionals stdenv.hostPlatform.isCygwin [
+        # -std=gnu on cygwin defines 'unix', which conflicts with the namespace
+        "-D_POSIX_C_SOURCE=200809L"
+        "-D_GNU_SOURCE"
+        # undefined reference to `__wrap__Znwm'
+        "-DGC_NO_INLINE_STD_NEW=1"
+      ]
+    );
+  };
 
   checkInputs = [
     gtest

@@ -1,0 +1,57 @@
+From 460e4dbf60d7d259ed1098cf078e64113db5812a Mon Sep 17 00:00:00 2001
+From: David McFarland <corngood@gmail.com>
+Date: Wed, 12 Nov 2025 18:56:16 -0400
+Subject: [PATCH] Revert "Simplify RegisterCommand"
+
+This reverts commit e7c0906521f19b645b2972c38ce94fe32da84c8c.
+---
+ src/libcmd/command.cc                 |  4 +++-
+ src/libcmd/include/nix/cmd/command.hh | 11 ++++-------
+ 2 files changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/src/libcmd/command.cc b/src/libcmd/command.cc
+index 6b6bbe345..842d24807 100644
+--- a/src/libcmd/command.cc
++++ b/src/libcmd/command.cc
+@@ -14,10 +14,12 @@
+ 
+ namespace nix {
+ 
++RegisterCommand::Commands * RegisterCommand::commands = nullptr;
++
+ nix::Commands RegisterCommand::getCommandsFor(const std::vector<std::string> & prefix)
+ {
+     nix::Commands res;
+-    for (auto & [name, command] : RegisterCommand::commands())
++    for (auto & [name, command] : *RegisterCommand::commands)
+         if (name.size() == prefix.size() + 1) {
+             bool equal = true;
+             for (size_t i = 0; i < prefix.size(); ++i)
+diff --git a/src/libcmd/include/nix/cmd/command.hh b/src/libcmd/include/nix/cmd/command.hh
+index 20cd1abc1..8616a67f7 100644
+--- a/src/libcmd/include/nix/cmd/command.hh
++++ b/src/libcmd/include/nix/cmd/command.hh
+@@ -285,16 +285,13 @@ struct StorePathCommand : public StorePathsCommand
+ struct RegisterCommand
+ {
+     typedef std::map<std::vector<std::string>, std::function<ref<Command>()>> Commands;
+-
+-    static Commands & commands()
+-    {
+-        static Commands commands;
+-        return commands;
+-    }
++    static Commands * commands;
+ 
+     RegisterCommand(std::vector<std::string> && name, std::function<ref<Command>()> command)
+     {
+-        commands().emplace(name, command);
++        if (!commands)
++            commands = new Commands;
++        commands->emplace(name, command);
+     }
+ 
+     static nix::Commands getCommandsFor(const std::vector<std::string> & prefix);
+-- 
+2.51.0
+
