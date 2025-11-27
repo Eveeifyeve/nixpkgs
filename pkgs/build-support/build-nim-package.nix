@@ -5,7 +5,6 @@
   stdenv,
   nim,
   nim_builder,
-  defaultNimVersion ? 2,
   nimOverrides,
   buildNimPackage,
 }:
@@ -109,22 +108,31 @@ let
           depsBuildBuild ? [ ],
           nativeBuildInputs ? [ ],
           nimFlags ? [ ],
-          requiredNimVersion ? defaultNimVersion,
           passthru ? { },
           ...
-        }:
+        }@args:
         (
-          if requiredNimVersion == 2 then
-            {
-              depsBuildBuild = [ nim_builder ] ++ depsBuildBuild;
-              nativeBuildInputs = [ nim ] ++ nativeBuildInputs;
-            }
+          #TODO: Remove at 26.11
+          if args ? requiredNimVersion then
+            if args.requiredNimVersion == 2 then
+              lib.warn ''
+                `requiredNimVersion' is deprecated and will be removed in nixpkgs 26.11.
+                Please update your package to remove this.
+              ''
+            else
+              throw ''
+                `requiredNimVersion' ${toString args.requiredNimVersion} is not supported.
+                Ensure your package supports nim 2, and remove `requiredNimVersion'.
+              ''
           else
-            throw "requiredNimVersion ${toString requiredNimVersion} is not valid"
+            { }
         )
         // {
           nimFlags = lockFileNimFlags ++ nimFlags;
           passthru = passthru // {
+            depsBuildBuild = [ nim_builder ] ++ depsBuildBuild;
+            nativeBuildInputs = [ nim ] ++ nativeBuildInputs;
+
             # allow overriding the result of buildNimPackageArgs before this composition is applied
             # this allows overriding the lockFile for packages built using buildNimPackage
             # this is adapted from mkDerivationExtensible in stdenv.mkDerivation
