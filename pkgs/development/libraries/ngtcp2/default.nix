@@ -56,7 +56,7 @@ stdenv.mkDerivation (finalAttrs: {
     changelog = "https://github.com/ngtcp2/ngtcp2/releases/tag/v${finalAttrs.version}";
     description = "Implementation of the QUIC protocol (RFC9000)";
     license = lib.licenses.mit;
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.all;
     maintainers = with lib.maintainers; [ izorkin ];
   };
 })
