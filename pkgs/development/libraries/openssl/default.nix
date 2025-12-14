@@ -182,6 +182,8 @@ let
             "./Configure ios${toString stdenv.hostPlatform.parsed.cpu.bits}-cross"
           else if stdenv.hostPlatform.isCygwin then
             "./Configure Cygwin-${stdenv.hostPlatform.linuxArch}"
+          else if stdenv.hostPlatform.isWindows then
+            "./Configure MSWin32"
           else
             throw "Not sure what configuration to use for ${stdenv.hostPlatform.config}"
         );
