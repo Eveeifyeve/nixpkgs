@@ -39,7 +39,7 @@ stdenv.mkDerivation (finalAttrs: {
     changelog = "https://github.com/ngtcp2/nghttp3/releases/tag/v${finalAttrs.version}";
     description = "Implementation of HTTP/3 mapping over QUIC and QPACK in C";
     license = lib.licenses.mit;
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.all;
     maintainers = with lib.maintainers; [ izorkin ];
   };
 })
