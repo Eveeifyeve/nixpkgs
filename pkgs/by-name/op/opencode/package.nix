@@ -29,7 +29,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       src
       bunWorkspaces
       ;
-    hash = "sha256-5LGd4Tn0wlIk5bFH0El/YTAdP4jqPvpQq0gWOBsSDZA=";
+    hash = "sha256-8DNHFUYYGOgCkAfCixWhqBYb5pFyu0ERucsnP/VjhoM=";
 
     postInstall = ''
       bun run ./nix/scripts/canonicalize-node-modules.ts
