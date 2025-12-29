@@ -6,6 +6,7 @@
   cacert,
   makeSetupHook,
   bun,
+  symlinks,
 }:
 
 {
@@ -41,6 +42,7 @@
             jq
             moreutils
             bun
+            symlinks
           ]
           ++ args'.nativeBuildInputs or [ ];
 
@@ -59,6 +61,9 @@
                   ${lib.escapeShellArgs installFlags} \
                   --frozen-lockfile
 
+              # rewrite all symlinks to be relative
+              symlinks -cr $BUN_INSTALL_CACHE_DIR
+
               runHook postInstall
             '';
 
@@ -71,7 +76,7 @@
                 --mtime="@$SOURCE_DATE_EPOCH" \
                 --owner=0 --group=0 --numeric-owner \
                 --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime \
-                -czf $out $BUN_INSTALL_CACHE_DIR
+                -czf $out -C $BUN_INSTALL_CACHE_DIR .
 
                 runHook postFixup
             '';
