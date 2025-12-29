@@ -17,7 +17,6 @@
           lib.optionalString (args ? "pname" && args ? "version") "${args.pname}-${args.version}-"
           + "bun-deps.tar.gz",
         workspaces ? [ ],
-        preBuild ? "",
         installFlags ? [ ],
         os ? [
           "linux"
@@ -34,7 +33,6 @@
           "pname"
           "version"
           "workspaces"
-          "preBuild"
           "installFlags"
         ];
       in
@@ -54,11 +52,10 @@
 
           buildPhase =
             args.buildPhase or ''
-              runHook preBuild
               export HOME=$(mktemp -d)
               export BUN_INSTALL_CACHE_DIR=$(mktemp -d)
 
-              ${preBuild}
+              runHook preBuild
 
               bun install \
                   --force \
