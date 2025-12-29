@@ -6,6 +6,7 @@
   cacert,
   makeSetupHook,
   bun,
+  symlinks,
 }:
 
 {
@@ -16,8 +17,13 @@
           lib.optionalString (args ? "pname" && args ? "version") "${args.pname}-${args.version}-"
           + "bun-deps.tar.gz",
         workspaces ? [ ],
-        preInstall ? "",
         installFlags ? [ ],
+        os ? [
+          "linux"
+          "darwin"
+          "freebsd"
+        ],
+        cpu ? [ "*" ],
         outputHash,
         outputHashAlgo,
         ...
@@ -27,7 +33,6 @@
           "pname"
           "version"
           "workspaces"
-          "preInstall"
           "installFlags"
         ];
       in
@@ -41,43 +46,48 @@
             jq
             moreutils
             bun
+            symlinks
           ]
           ++ args'.nativeBuildInputs or [ ];
 
-          installPhase =
-            args.installPhase or ''
-              runHook preInstall
-
+          buildPhase =
+            args.buildPhase or ''
               export HOME=$(mktemp -d)
               export BUN_INSTALL_CACHE_DIR=$(mktemp -d)
 
-              ${preInstall}
+              runHook preBuild
 
               bun install \
                   --force \
                   ${lib.escapeShellArgs (lib.map (package: "--filter=${package}") workspaces)} \
+                  ${lib.escapeShellArgs (lib.map (os: "--os=${os}") os)} \
+                  ${lib.escapeShellArgs (lib.map (cpu: "--cpu=${cpu}") cpu)} \
                   ${lib.escapeShellArgs installFlags} \
+                  --ignore-scripts \
                   --frozen-lockfile
 
-              runHook postInstall
+              # rewrite all symlinks to be relative
+              symlinks -cr $BUN_INSTALL_CACHE_DIR
+
+              runHook postBuild
             '';
 
           # Build a reproducible tarball, per instructions at https://reproducible-builds.org/docs/archives/
-          fixupPhase =
-            args.fixupPhase or ''
-              runHook preFixup
+          installPhase =
+            args.installPhase or ''
+              runHook preInstall
 
               tar --sort=name \
                 --mtime="@$SOURCE_DATE_EPOCH" \
                 --owner=0 --group=0 --numeric-owner \
                 --pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime \
-                -czf $out $BUN_INSTALL_CACHE_DIR
+                -czf $out -C $BUN_INSTALL_CACHE_DIR .
 
-                runHook postFixup
+              runHook postInstall
             '';
 
           dontConfigure = args'.dontConfigure or true;
-          dontBuild = args'.dontBuild or true;
+          dontFixup = args'.dontFixup or true;
 
           inherit outputHash outputHashAlgo;
           outputHashMode = "recursive";

@@ -27,7 +27,7 @@ let
         src
         sourceRoot
         ;
-      hash = "sha256-CzQXdx2nLHHd9Fjiu4P5V5uFuhBkpzGyTBqhlLehtIw=";
+      hash = "sha256-7s4jr+39evDk7SsUlTWTNUMAezm5qi0k5xkTlkpWcbc=";
     };
 
     sourceRoot = "${finalAttrs.src.name}/web";
