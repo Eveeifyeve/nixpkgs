@@ -65,6 +65,85 @@ rustPlatform.buildRustPackage (finalAttrs: {
   postPatch = ''
     substituteInPlace {apps/app,packages/app-lib}/Cargo.toml apps/app-frontend/package.json \
       --replace-fail '1.0.0-local' '${finalAttrs.version}'
+
+    substituteInPlace $cargoDepsCopy/cidre/build.rs \
+      --replace-fail " let status = if sdk == "maccatalyst" {
+
+        let c = Command::new("xcrun")
+            .arg("--show-sdk-path")
+            .output()
+            .unwrap();
+        let line = String::from_utf8(c.stdout).unwrap();
+        let line = line.lines().next().unwrap();
+
+        println!("cargo:rustc-link-search=system={line}/System/iOSSupport/usr");
+        println!(
+            "cargo:rustc-link-search=framework={line}/System/iOSSupport/System/Library/Frameworks"
+        );
+
+        // -isystem $(MACOSX_SDK_DIR)/System/iOSSupport/usr/include \
+        // -iframework $(MACOSX_SDK_DIR)/System/iOSSupport/System/Library/Frameworks
+        Command::new("xcodebuild")
+            .args(["-project", "./pomace/pomace.xcodeproj"])
+            .args(["-sdk", "macosx"])
+            .args(["-arch", arch])
+            .args(["-configuration", configuration])
+            // .args(["-derivedDataPath", out_lib_dir.to_str().unwrap()])
+            .args([
+                "-destination 'generic/platform=macOS,variant=Mac Catalyst'",
+                "SUPPORTS_MACCATALYST=YES",
+            ])
+            .args(targets)
+            .arg("build")
+            .args(env_args)
+            .status()
+            .unwrap()
+    } else {
+        Command::new("xcodebuild")
+            .args(["-project", "./pomace/pomace.xcodeproj"])
+            .args(["-sdk", sdk])
+            .args(["-arch", arch])
+            .args(["-configuration", configuration])
+            .args(targets)
+            // .args(["-derivedDataPath", out_lib_dir.to_str().unwrap()])
+            .arg("build")
+            .args(env_args)
+            .status()
+            .unwrap()
+    };"
+
+    "
+        let c = Command::new("xcrun")
+            .arg("--show-sdk-path")
+            .output()
+            .unwrap();
+        let line = String::from_utf8(c.stdout).unwrap();
+        let line = line.lines().next().unwrap();
+
+        println!("cargo:rustc-link-search=system={line}/System/iOSSupport/usr");
+        println!(
+            "cargo:rustc-link-search=framework={line}/System/iOSSupport/System/Library/Frameworks"
+        );
+
+        // -isystem $(MACOSX_SDK_DIR)/System/iOSSupport/usr/include \
+        // -iframework $(MACOSX_SDK_DIR)/System/iOSSupport/System/Library/Frameworks
+        Command::new("xcodebuild")
+            .args(["-project", "./pomace/pomace.xcodeproj"])
+            .args(["-sdk", "macosx"])
+            .args(["-arch", arch])
+            .args(["-configuration", configuration])
+            // .args(["-derivedDataPath", out_lib_dir.to_str().unwrap()])
+            .args([
+                "-destination 'generic/platform=macOS,variant=Mac Catalyst'",
+                "SUPPORTS_MACCATALYST=YES",
+            ])
+            .args(targets)
+            .arg("build")
+            .args(env_args)
+            .status()
+            .unwrap()
+    "
+
   '';
 
   cargoHash = "sha256-pZwWqWkcq142iIO0Ier9NH56P1EWXAoRiqDCNyElXCA=";
@@ -169,7 +248,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     # This builds on architectures like aarch64, but the launcher itself does not support them yet.
     # Darwin is the only exception
     # See https://github.com/modrinth/code/issues/776#issuecomment-1742495678
-    broken = !stdenv.hostPlatform.isx86_64 || !stdenv.hostPlatform.isLinux;
+    broken = !stdenv.hostPlatform.isx86_64 || !stdenv.hostPlatform.isDarwin;
     sourceProvenance = with lib.sourceTypes; [
       fromSource
       binaryBytecode # mitm cache
