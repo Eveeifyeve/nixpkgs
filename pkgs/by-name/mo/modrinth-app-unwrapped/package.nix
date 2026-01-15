@@ -61,10 +61,16 @@ rustPlatform.buildRustPackage (finalAttrs: {
     ./remove-spotless.patch
   ];
 
-  # Let the app know about our actual version number
   postPatch = ''
+    # Let the app know about our actual version number
     substituteInPlace {apps/app,packages/app-lib}/Cargo.toml apps/app-frontend/package.json \
-      --replace-fail '1.0.0-local' '${finalAttrs.version}'
+    --replace-fail '1.0.0-local' '${finalAttrs.version}'
+
+    # This patch fixes the issue with watchos isn't avaliable in apple-sdk and allows cidre (used for networking in modrinth) to build.
+    cidreDir=$(find $cargoDepsCopy -maxdepth 1 -type d -name 'cidre-*' | head -1)
+    substituteInPlace "$cidreDir/pomace/core_motion/core_motion.h" \
+      --replace-fail "#if TARGET_OS_IOS || TARGET_OS_WATCHOS" "#if TARGET_OS_IOS"
+
   '';
 
   cargoHash = "sha256-hqEBGyMaAz8B11eHMm/r+6ItLnHmvSD9sD1uVNNQfxA=";
@@ -77,7 +83,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     inherit (finalAttrs) pname version src;
     pnpm = pnpm_9;
     fetcherVersion = 1;
-    hash = "sha256-+/PGCoHAC9Hsl2YEdjvUBzDJi9iBf+ZxT/6yjDE3yBo=";
+    hash = "sha256-hW3PY1k+vyO1w3ybAIKNQ4jboA1iOYbfAONdhqbrqOk=";
   };
 
   nativeBuildInputs = [
@@ -170,7 +176,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     # This builds on architectures like aarch64, but the launcher itself does not support them yet.
     # Darwin is the only exception
     # See https://github.com/modrinth/code/issues/776#issuecomment-1742495678
-    broken = !stdenv.hostPlatform.isx86_64 || !stdenv.hostPlatform.isLinux;
+    broken = !stdenv.hostPlatform.isx86_64 && !stdenv.hostPlatform.isDarwin;
     sourceProvenance = with lib.sourceTypes; [
       fromSource
       binaryBytecode # mitm cache
