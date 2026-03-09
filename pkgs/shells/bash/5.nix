@@ -93,14 +93,17 @@ lib.warnIf (withDocs != null)
 
     patchFlags = [ "-p0" ];
 
-    patches = upstreamPatches ++ [
-      # Enable PGRP_PIPE independently of the kernel of the build machine.
-      # This doesn't seem to be upstreamed despite such a mention of in https://github.com/NixOS/nixpkgs/pull/77196,
-      # which originally introduced the patch
-      # Some related discussion can be found in
-      # https://lists.gnu.org/archive/html/bug-bash/2015-05/msg00071.html
-      ./pgrp-pipe-5.patch
-    ];
+    patches =
+      upstreamPatches
+      ++ [
+        # Enable PGRP_PIPE independently of the kernel of the build machine.
+        # This doesn't seem to be upstreamed despite such a mention of in https://github.com/NixOS/nixpkgs/pull/77196,
+        # which originally introduced the patch
+        # Some related discussion can be found in
+        # https://lists.gnu.org/archive/html/bug-bash/2015-05/msg00071.html
+        ./pgrp-pipe-5.patch
+      ]
+      ++ (lib.optionals stdenv.hostPlatform.isMinGW) [ ];
 
     configureFlags = [
       # At least on Linux bash memory allocator has pathological performance
@@ -280,8 +283,6 @@ lib.warnIf (withDocs != null)
       '';
       license = lib.licenses.gpl3Plus;
       platforms = lib.platforms.all;
-      # https://github.com/NixOS/nixpkgs/issues/333338
-      badPlatforms = [ lib.systems.inspect.patterns.isMinGW ];
       maintainers = with lib.maintainers; [ infinisil ];
       mainProgram = "bash";
       identifiers.cpeParts =
