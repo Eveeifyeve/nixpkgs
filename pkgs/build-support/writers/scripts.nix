@@ -1152,6 +1152,52 @@ rec {
   writePerlBin = name: writePerl "/bin/${name}";
 
   /**
+    Like writeScript but the first line is a shebang to powershell
+
+    Can be called with or without extra arguments.
+
+    # Examples
+    :::{.example}
+    ## `pkgs.writers.writePs` without arguments
+
+    ```nix
+    writePs "example" ''
+      Write-Host "hello world"
+    ''
+    ```
+    :::
+
+    :::{.example}
+    ## `pkgs.writers.writePs` with arguments
+
+    ```nix
+    writePs "example"
+      {
+        makeWrapperArgs = [
+          "--prefix" "PATH" ":" "${lib.makeBinPath [ pkgs.hello ]}"
+        ];
+      }
+      ''
+        hello
+      ''
+    ```
+    :::
+  */
+  writePs =
+    name: argsOrScript:
+    if lib.isAttrs argsOrScript && !lib.isDerivation argsOrScript then
+      makeScriptWriter (
+        argsOrScript
+        // {
+          interpreter = "${lib.getExe pkgs.powershell} -NoProfile";
+        }
+      ) name
+    else
+      makeScriptWriter {
+        interpreter = "${lib.getExe pkgs.powershell} -NoProfile";
+      } name argsOrScript;
+
+  /**
     makePythonWriter takes python and compatible pythonPackages and produces python script writer,
     which validates the script with flake8 at build time. If any libraries are specified,
     python.withPackages is used as interpreter, otherwise the "bare" python is used.

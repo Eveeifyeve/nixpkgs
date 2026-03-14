@@ -41,6 +41,7 @@ let
     writeNu
     writePerl
     writePerlBin
+    writePs
     writePyPy3
     writePython3
     writePython3Bin
@@ -251,6 +252,12 @@ recurseIntoAttrs {
     nu = expectSuccess (
       writeNu "test-writers-nushell" ''
         echo "success"
+      ''
+    );
+
+    ps = expectSuccess (
+      writePs "test-writers-powershell" ''
+        Write-Host "success"
       ''
     );
 
