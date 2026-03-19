@@ -376,7 +376,7 @@ in
     # FIXME: this should really be socket-activated for über-awesomeness.
     systemd.user.services.ssh-agent = lib.mkIf cfg.startAgent {
       description = "SSH Agent";
-      wantedBy = [ "default.target" ];
+      wantedBy = [ "multi-user.target" ];
       unitConfig.ConditionUser = "!@system";
       serviceConfig = {
         ExecStartPre = "${pkgs.coreutils}/bin/rm -f %t/ssh-agent";
