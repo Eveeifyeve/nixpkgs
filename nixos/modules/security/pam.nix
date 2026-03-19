@@ -2368,7 +2368,7 @@ in
           tmpfiles.packages = [ pkgs.util-linux.lastlog ]; # /lib/tmpfiles.d/lastlog2-tmpfiles.conf
           services.lastlog2-import = {
             enable = true;
-            wantedBy = [ "default.target" ];
+            wantedBy = [ "multi-user.target" ];
             after = [
               "local-fs.target"
               "systemd-tmpfiles-setup.service"
