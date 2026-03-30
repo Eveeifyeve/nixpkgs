@@ -45,6 +45,7 @@ installFonts() {
   if [ -n "${webfont-}" ]; then
     installFont 'woff' "$webfont/share/fonts/woff"
     installFont 'woff2' "$webfont/share/fonts/woff2"
+  elif [[ "${dontInstallWebfonts-}" != 1 && -n "$(find . \( -iname "*.woff" -o -iname "*.woff2" \) -print)" ]]; then
+    nixErrorLog "Please consider adding \"webfont\" to outputs to install woff/woff2 files. Or, set dontInstallWebfonts to silence this." "warning: Please consider adding \"webfont\" to outputs to install woff/woff2 files. Or, set dontInstallWebfonts to silence this."
   fi
-
 }
