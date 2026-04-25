@@ -2,6 +2,8 @@
   lib,
   rustPlatform,
   fetchFromGitHub,
+  versionCheckHook,
+  nix-update-script,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {
@@ -17,12 +19,15 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   cargoHash = "sha256-m6bYkewBE0ZloDVUhUslS+dgPyoK+eay7rrP3+c00mo=";
 
+  nativeBuildInputs = [ versionCheckHook ];
+  passthru.updateScript = nix-update-script { };
+
   meta = {
     description = "Infinitely transfer between every device over pure HTTP with pipes or browsers";
     homepage = "https://github.com/nwtgck/piping-server-rust";
-    changelog = "https://github.com/nwtgck/piping-server-rust/blob/v${finalAttrs.version}/CHANGELOG.md";
+    changelog = "https://github.com/nwtgck/piping-server-rust/releases/tag/v${finalAttrs.version}";
     license = lib.licenses.mit;
-    maintainers = [ ];
+    maintainers = with lib.maintainers; [ eveeifyeve ];
     mainProgram = "piping-server";
   };
 })
