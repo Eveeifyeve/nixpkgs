@@ -1,129 +1,90 @@
 {
   lib,
-  stdenvNoCC,
-  stdenv,
-  fetchurl,
-  autoPatchelfHook,
-  undmg,
-  zstd,
-  alsa-lib,
-  curl,
+  rustPlatform,
+  fetchFromGitHub,
+  pkg-config,
+  protobuf,
+  bzip2,
   fontconfig,
-  libglvnd,
+  freetype,
+  libgit2,
   libxkbcommon,
+  oniguruma,
+  openssl,
+  rust-jemalloc-sys,
+  sqlite,
   vulkan-loader,
-  wayland,
-  xdg-utils,
-  libxi,
-  libxcursor,
-  libx11,
-  libxcb,
-  xz, # liblzma
+  xz,
   zlib,
-  makeWrapper,
-  waylandSupport ? false,
+  zstd,
+  stdenv,
+  alsa-lib,
+  wayland,
+  apple-sdk,
+  xcbuild,
 }:
 
-let
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "warp-terminal";
-  versions = lib.importJSON ./versions.json;
+  version = "0.2026.04.29.08.56.stable_00";
+
+  src = fetchFromGitHub {
+    owner = "warpdotdev";
+    repo = "warp";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-ChtFrQGd4ha2DFb/gv8lIy0tyygoo3eoaY2hjL6dBIo=";
+  };
+
+  cargoBuildFlags = [ "--package=warp" ];
+  cargoTestFlags = finalAttrs.cargoBuildFlags;
+
+  cargoHash = "sha256-Pqxzek7hAuj/mlhiaipq+TsufWOsfuabj8T4O70oluw=";
+
+  nativeBuildInputs = [
+    pkg-config
+    protobuf
+    xcbuild
+    rustPlatform.bindgenHook
+  ];
+
+  buildInputs = [
+    bzip2
+    fontconfig
+    freetype
+    libgit2
+    libxkbcommon
+    oniguruma
+    openssl
+    rust-jemalloc-sys
+    sqlite
+    vulkan-loader
+    xz
+    zlib
+    zstd
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isDarwin [
+    apple-sdk
+  ]
+  ++ lib.optionals stdenv.hostPlatform.isLinux [
+    alsa-lib
+    wayland
+  ];
+
+  env = {
+    LIBGIT2_NO_VENDOR = true;
+    RUSTONIG_SYSTEM_LIBONIG = true;
+    ZSTD_SYS_USE_PKG_CONFIG = true;
+  };
+
   passthru.updateScript = ./update.sh;
 
-  linux_arch = if stdenv.hostPlatform.system == "x86_64-linux" then "x86_64" else "aarch64";
-
-  linux = stdenv.mkDerivation (finalAttrs: {
-    inherit pname meta passthru;
-    inherit (versions."linux_${linux_arch}") version;
-    src = fetchurl {
-      inherit (versions."linux_${linux_arch}") hash;
-      url = "https://releases.warp.dev/stable/v${finalAttrs.version}/warp-terminal-v${finalAttrs.version}-1-${linux_arch}.pkg.tar.zst";
-    };
-
-    sourceRoot = ".";
-
-    postPatch = ''
-      substituteInPlace usr/bin/warp-terminal \
-        --replace-fail /opt/ $out/opt/
-    '';
-
-    nativeBuildInputs = [
-      autoPatchelfHook
-      zstd
-      makeWrapper
-    ];
-
-    buildInputs = [
-      alsa-lib # libasound.so.2
-      curl
-      fontconfig
-      (lib.getLib stdenv.cc.cc) # libstdc++.so libgcc_s.so
-      zlib
-      xz
-    ];
-
-    runtimeDependencies = [
-      libglvnd # for libegl
-      libxkbcommon
-      stdenv.cc.libc
-      vulkan-loader
-      xdg-utils
-      libx11
-      libxcb
-      libxcursor
-      libxi
-    ]
-    ++ lib.optionals waylandSupport [ wayland ];
-
-    installPhase = ''
-      runHook preInstall
-
-      mkdir $out
-      cp -r opt usr/* $out
-
-    ''
-    + lib.optionalString waylandSupport ''
-      wrapProgram $out/bin/warp-terminal --set WARP_ENABLE_WAYLAND 1
-    ''
-    + ''
-      runHook postInstall
-    '';
-
-    postFixup = ''
-      # Link missing libfontconfig to fix font discovery
-      # https://github.com/warpdotdev/Warp/issues/5793
-      patchelf \
-        --add-needed libfontconfig.so.1 \
-        $out/opt/warpdotdev/warp-terminal/warp
-    '';
-  });
-
-  darwin = stdenvNoCC.mkDerivation (finalAttrs: {
-    inherit pname meta passthru;
-    inherit (versions.darwin) version;
-    src = fetchurl {
-      inherit (versions.darwin) hash;
-      url = "https://releases.warp.dev/stable/v${finalAttrs.version}/Warp.dmg";
-    };
-
-    sourceRoot = ".";
-
-    nativeBuildInputs = [ undmg ];
-
-    installPhase = ''
-      runHook preInstall
-
-      mkdir -p $out/Applications
-      cp -r *.app $out/Applications
-
-      runHook postInstall
-    '';
-  });
-
   meta = {
-    description = "Rust-based terminal";
-    homepage = "https://www.warp.dev";
-    license = lib.licenses.unfree;
-    sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
+    description = "Warp is an agentic development environment, born out of the terminal";
+    homepage = "https://github.com/warpdotdev/warp";
+    license = with lib.licenses; [
+      agpl3Only
+      mit
+    ];
     maintainers = with lib.maintainers; [
       imadnyc
       FlameFlag
@@ -134,7 +95,7 @@ let
       "x86_64-linux"
       "aarch64-linux"
     ];
-  };
 
-in
-if stdenvNoCC.hostPlatform.isDarwin then darwin else linux
+    mainProgram = "warp-terminal";
+  };
+})
