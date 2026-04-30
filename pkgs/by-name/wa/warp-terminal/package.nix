@@ -89,6 +89,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
       imadnyc
       FlameFlag
       johnrtitor
+      eveeifyeve
       logger
     ];
     platforms = lib.platforms.darwin ++ [
